@@ -9,25 +9,27 @@ import UIKit
 
 class ToDoTableViewController: UITableViewController {
     
-    var toDos : [ToDo] = []
+    var toDos : [ToDoCD] = []
     
     override func viewDidLoad() {
         super.viewDidLoad()
-
-        toDos = createToDos()
+        getToDos()
     }
     
-    func createToDos() -> [ToDo] {
-
-      let swift = ToDo()
-      swift.name = "Learn Swift"
-      swift.important = true
-
-      let dog = ToDo()
-      dog.name = "Walk the Dog"
-      // important is set to false by default
-
-      return [swift, dog]
+    override func viewWillAppear(_ animated: Bool) {
+        getToDos()
+    }
+    
+    func getToDos() {
+        // go into core data and get all the toDos
+        if let context = (UIApplication.shared.delegate as? AppDelegate)?.persistentContainer.viewContext {
+            // try to go get those objects stored in core data
+            if let coreDataToDos = try? context.fetch(ToDoCD.fetchRequest()) as? [ToDoCD] {
+                toDos = coreDataToDos
+                tableView.reloadData()
+                
+            }
+        }
     }
 
     // MARK: - Table view data source
@@ -47,11 +49,13 @@ class ToDoTableViewController: UITableViewController {
         let cell = tableView.dequeueReusableCell(withIdentifier: "reuseIdentifier", for: indexPath)
 
         let toDo = toDos[indexPath.row]
-
-        if toDo.important {
-            cell.textLabel?.text = "❗️" + toDo.name
-        } else {
-            cell.textLabel?.text = toDo.name
+        
+        if let name = toDo.name {
+            if toDo.important {
+                cell.textLabel?.text = "❗️" + name
+            } else {
+                cell.textLabel?.text = name
+            }
         }
 
         return cell
@@ -106,7 +110,7 @@ class ToDoTableViewController: UITableViewController {
         }
         
         if let completeVC = segue.destination as? CompleteToDoViewController {
-            if let toDo = sender as? ToDo {
+            if let toDo = sender as? ToDoCD {
               completeVC.selectedToDo = toDo
               completeVC.previousVC = self
             }
